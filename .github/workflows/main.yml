@@ -9,15 +9,21 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_DATABASE: ${{ secrets.DB_DATABASE }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build Docker images for all services 
         run: |
           docker build --tag dimdallas/file-system-image --file docker/fileSystem/Dockerfile .
@@ -25,7 +31,9 @@ jobs:
           docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_HOST=${DB_HOST} --tag dimdallas/upload-video-image --file docker/videoUploader/Dockerfile .
           docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_HOST=${DB_HOST} --tag dimdallas/streaming-video-image --file docker/videoStreamer/Dockerfile .
           docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD} --tag dimdallas/mysql-streaming-system --file docker/database/Dockerfile .
-          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      
+      - name: Push Docker images to registry 
+        run: |
           docker push dimdallas/file-system-image:latest
           docker push dimdallas/auth-service-image:latest
           docker push dimdallas/upload-video-image:latest
@@ -34,4 +42,4 @@ jobs:
           
       - name: Deploy Application & Database 
         run: |
-          docker compose up --file ./docker-compose.yml -d
+          docker compose up --file docker-compose.yml -d
