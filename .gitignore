@@ -2,3 +2,4 @@
 /docker-compose-env.yml
 /docker-compose-secrets.yml
 dockerCICD.zip
+/actions-runner

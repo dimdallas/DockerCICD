@@ -6,8 +6,8 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-and-deploy:
+    runs-on: self-hosted
     env:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_DATABASE: ${{ secrets.DB_DATABASE }}
@@ -39,3 +39,7 @@ jobs:
           docker push dimdallas/upload-video-image:latest
           docker push dimdallas/streaming-video-image:latest
           docker push dimdallas/mysql-streaming-system:latest
+          
+      - name: Deploy Application & Database 
+        run: |
+          docker compose up --file docker-compose.yml -d
