@@ -1,3 +1,4 @@
 /_docker-compose.copy.yml
 /docker-compose-env.yml
 /docker-compose-secrets.yml
+dockerCICD.zip
