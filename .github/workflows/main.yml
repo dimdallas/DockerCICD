@@ -1,0 +1,35 @@
+name: CI/CD Pipeline
+on:
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_DATABASE: ${{ secrets.DB_DATABASE }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker images for all services 
+        run: |
+          docker build --tag dimdallas/file-system-image --file docker/fileSystem/Dockerfile .
+          docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_HOST=${DB_HOST} --tag dimdallas/auth-service-image --file docker/authenticator/Dockerfile .
+          docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_HOST=${DB_HOST} --tag dimdallas/upload-video-image --file docker/videoUploader/Dockerfile .
+          docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_HOST=${DB_HOST} --tag dimdallas/streaming-video-image --file docker/videoStreamer/Dockerfile .
+          docker build --build-arg DB_DATABASE=${DB_DATABASE} --build-arg DB_USER=${DB_USER} --build-arg DB_PASSWORD=${DB_PASSWORD} --build-arg DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD} --tag dimdallas/mysql-streaming-system --file docker/database/Dockerfile .
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker push dimdallas/file-system-image:latest
+          docker push dimdallas/auth-service-image:latest
+          docker push dimdallas/upload-video-image:latest
+          docker push dimdallas/streaming-video-image:latest
+          docker push dimdallas/mysql-streaming-system:latest
+          
+      - name: Deploy Application & Database 
+        run: |
+          docker compose up --file ./docker-compose.yml -d

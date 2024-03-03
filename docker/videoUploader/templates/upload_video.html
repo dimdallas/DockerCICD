@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Video</title>
+</head>
+<body>
+    <h1>Welcome, {{ username }}!</h1>
+
+    <!-- Logout Button -->
+    <form action="/logout" method="post">
+        <button type="submit">Logout</button>
+    </form>
+
+    <!-- Navigation Button to Stream Page -->
+    <a href="http://localhost:5003/stream-video">
+        <button type="button">Stream Page</button>
+    </a>
+
+    <br>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="title">Video Title:</label>
+        <input type="text" id="title" name="title" required>
+        <br>
+        <label for="video">Upload Video:</label>
+        <input type="file" id="video" name="video" accept=".mp4" required>
+        <br>
+        <button type="button" onclick="uploadVideo()">Upload</button>
+    </form>
+
+    <!-- Display Server Response -->
+    <div id="responseField"></div>
+
+    <script>
+        function uploadVideo() {
+            // Get form data
+            var formData = new FormData(document.getElementById('uploadForm'));
+
+            // Send AJAX request to handle-upload endpoint
+            fetch('/handle-upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Display server response in the responseField
+                document.getElementById('responseField').innerText = data;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

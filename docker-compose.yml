@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+  file-system-service:
+    image: dimdallas/file-system-image
+    container_name: file-system-container
+    volumes:
+      - videos-storage:/app/videos
+      - ./docker/fileSystem/file_system.py:/app/file_system.py
+    networks:
+      - system_network
+
+  authentication-service:
+    image: dimdallas/auth-service-image
+    container_name: authenticator-container
+    networks:
+      - system_network
+    depends_on:
+      mysql-db-service:
+        condition: service_healthy
+
+  upload-video-service:
+    image: dimdallas/upload-video-image
+    container_name: upload-container
+    volumes:
+      - ./docker/videoUploader/upload_service.py:/app/upload_service.py
+    networks:
+      - system_network
+    ports:
+      - "5002:5002"
+    depends_on:
+      mysql-db-service:
+        condition: service_healthy
+
+  video-streaming-service:
+    image: dimdallas/streaming-video-image
+    container_name: streaming-container
+    volumes:
+      - ./docker/videoStreamer/video_streamer.py:/app/video_streamer.py
+    networks:
+      - system_network
+    ports:
+      - "5003:5003"
+    depends_on:
+      mysql-db-service:
+        condition: service_healthy
+
+  mysql-db-service:
+    image: dimdallas/mysql-streaming-system
+    container_name: mySql-container
+    restart: always
+    networks:
+      - system_network
+    volumes:
+      - mySql-vss:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+
+volumes:
+  videos-storage:
+  mySql-vss:
+
+networks:
+  system_network:
+    driver: bridge

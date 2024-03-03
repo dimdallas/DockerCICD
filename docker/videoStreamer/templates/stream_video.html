@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Video</title>
+</head>
+<body>
+    <h1>Video Stream</h1>
+
+    <!-- Logout button -->
+    <form action="/logout" method="post">
+        <button type="submit">Logout</button>
+    </form>
+
+    <!-- Navigation button to Upload Page -->
+    <a href="http://localhost:5002/upload-video">
+        <button type="button">Upload Page</button>
+    </a>
+
+    <br>
+
+    <label for="userSelect">Select User:</label>
+    <select id="userSelect" name="userSelect" onchange="getVideos()">
+        <option value="">All Users</option>
+        <!-- The list of users will be populated dynamically using JavaScript -->
+    </select>
+
+    <br>
+
+    <button onclick="getVideos()">Show Videos</button>
+
+    <div id="videoList">
+        <!-- The list of videos will be populated dynamically using JavaScript -->
+    </div>
+
+    <div id="videoPlayer">
+        <!-- The video player will be displayed here when a video is selected -->
+    </div>
+
+    <script>
+        function getVideos() {
+            // Get selected user (if any)
+            var selectedUser = document.getElementById("userSelect").value;
+
+            // Make an AJAX request to the /get-videos endpoint
+            var url = "/get-videos";
+            if (selectedUser) {
+                url += "?user=" + selectedUser;
+            }
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    // Parse the JSON response
+                    var videos = JSON.parse(this.responseText);
+
+                    // Update the videoList div with the list of videos
+                    var videoListDiv = document.getElementById("videoList");
+                    videoListDiv.innerHTML = "<h3>Available Videos:</h3>";
+
+                    // Create a scrollable list of videos
+                    var videoList = document.createElement("ul");
+                    videos.forEach(function(video) {
+                        var listItem = document.createElement("li");
+                        
+                        // Update the link to play the video in the videoPlayer div
+                        listItem.innerHTML = "<a href='javascript:void(0);' onclick='playVideo(\"" + video.url + "\", \"" + video.title + "\")'>" + video.title + "</a>";
+                        
+                        videoList.appendChild(listItem);
+                    });
+
+                    videoListDiv.appendChild(videoList);
+
+                    // Clear the videoPlayer div
+                    document.getElementById("videoPlayer").innerHTML = "";
+                }
+            };
+
+            xhttp.open("GET", url, true);
+            xhttp.send();
+        }
+
+        // Function to play the video in the videoPlayer div
+        function playVideo(videoUrl, videoTitle) {
+            var videoPlayerDiv = document.getElementById("videoPlayer");
+            videoPlayerDiv.innerHTML = "<h3>Now Playing: " + videoTitle + "</h3>";
+            
+            // Use an HTML5 video element to play the video
+            var videoElement = document.createElement("video");
+            videoElement.controls = true;
+            videoElement.width = "640";
+            videoElement.height = "360";
+            
+            var sourceElement = document.createElement("source");
+            sourceElement.src = "/handle-stream?video=" + videoUrl;
+            sourceElement.type = "video/mp4";
+            
+            videoElement.appendChild(sourceElement);
+            videoPlayerDiv.appendChild(videoElement);
+        }
+
+        // Function to populate the user dropdown dynamically
+        function populateUsers() {
+            var userSelect = document.getElementById("userSelect");
+
+            // Make an AJAX request to the /get-users endpoint
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    // Parse the JSON response
+                    var users = JSON.parse(this.responseText);
+
+                    // Update the userSelect dropdown
+                    users.forEach(function(user) {
+                        var option = document.createElement("option");
+                        option.value = user.userId;
+                        option.innerHTML = user.username;
+                        userSelect.appendChild(option);
+                    });
+                }
+            };
+
+            xhttp.open("GET", "/get-users", true);
+            xhttp.send();
+        }
+
+        // Call the populateUsers function when the page loads
+        window.onload = populateUsers;
+    </script>
+</body>
+</html>
