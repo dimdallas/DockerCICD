@@ -42,4 +42,4 @@ jobs:
           
       - name: Deploy Application & Database 
         run: |
-          docker compose up --file docker-compose.yml -d
+          docker compose --file docker-compose.yml -d up
